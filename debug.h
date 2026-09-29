@@ -1,14 +1,57 @@
+#ifdef _DEBUG
+
 #include "stack.h"
 
 #ifndef _debug_h
 #define _debug_h
 
 
-#define PRINT_VAR_WITH_NAME(x)  printf("--> %s = ", #x); PRINT_ELEM_T(x); printf(" <--\n"); DEF_COL
-#define PRINT_VAR(x)            PRINT_ELEM_T(x);
-#define PRINT_FUL_STACK(x)      PrintStackElements(&x, #x, x.capacity);
+//-------------------------------------------------------------------------------------------------------------------------------------------------
 
-#define PRINT_STACK(x)          PrintStackElements(&x, #x, x.size);
+const char *LOG_FILE_NAME = "STACK_LOG.txt";
+const stack_elem POISON = ('s'+'a'+'t'+'o'+'r'+'u') * ('p'+'i'+'d'+'o'+'r'+'a'+'s');
+const stack_elem BORDER_LINE = ('c'+'a'+'n'+'a'+'r'+'y') * ('b'+'o'+'r'+'d'+'e'+'r'+'l'+'i'+'n'+'e');
+
+enum STACK_ERR
+{
+    ITS_OKAY = 0,
+    NO_MEMORY_TO_STACK = 676767,
+    SIZE_MORE_CAPACITY,
+    STACK_DOESNOT_EXIST,
+    FIND_POISON,
+    OUT_OF_MEM_ZONE,
+    STACK_IS_VOID,
+    STACK_CALLOC_ERROR,
+    EMPTY_STACK,
+    POP_CRUSHED,
+    PUSH_CRUSHED,
+    CTOR_CRUSHED,
+    DEST_CRUSHED
+};
+
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------
+
+#define LOG_FUNC_INFO fprintf(log_file, "\n[INFO] [%s:%d] (%s) --> started...\n", file_name, line_num, __FUNCTION__);
+#define END_FUNC_LOG  fprintf(log_file, "[INFO] (%s) --> completed!\n\n", __FUNCTION__);
+#define CRUSH_FUNC_LOG  fprintf(log_file, "[INFO] (%s) --> CRUSHED!!!\n\n", __FUNCTION__);
+
+#define PRINT_VAR_WITH_NAME(x)  fprintf(log_file, "--> %s = ", #x); PRINT_ELEM_T(x); fprintf(log_file, " <--\n");
+#define PRINT_VAR(x)            PRINT_ELEM_T(x);
+#define PRINT_FUL_STACK(x)      PrintStack(x, #x, x->capacity);
+#define PRINT_STACK(x)          PrintStack(x, #x, x->size);
+
+#define ASRT_ST_P(stack)        if (stack == NULL){ \
+                                    fprintf(log_file, "--> Stack is not defined. (stack is NULL pointer)\n"); \
+                                    return STACK_DOESNOT_EXIST;}
+
+#define ASRT_ST_MEM(stack)      if (stack->data == NULL){ \
+                                    fprintf(log_file, "--> Stack is empty. (data is NULL pointer)\n"); \
+                                    return STACK_IS_VOID;}
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------
+
+bool IsPoison(stack_elem element);
 
 void PrintDouble (const double var);
 void PrintInt    (const    int var);
@@ -17,5 +60,11 @@ void PrintStr    (const  char *var);
 
 void PrintStack(Stack_t *stack);
 
+int StackVerify(Stack_t *stack);
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#endif
 
 #endif
