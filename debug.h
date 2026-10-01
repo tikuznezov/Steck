@@ -8,7 +8,7 @@
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
-const char *LOG_FILE_NAME = "STACK_LOG.txt";
+const char *LOG_FILE_NAME = "STACK_LOG.log";
 const stack_elem POISON = ('s'+'a'+'t'+'o'+'r'+'u') * ('p'+'i'+'d'+'o'+'r'+'a'+'s');
 const stack_elem BORDER_LINE = ('c'+'a'+'n'+'a'+'r'+'y') * ('b'+'o'+'r'+'d'+'e'+'r'+'l'+'i'+'n'+'e');
 
@@ -26,17 +26,20 @@ enum STACK_ERR
     POP_CRUSHED,
     PUSH_CRUSHED,
     CTOR_CRUSHED,
-    DEST_CRUSHED
+    DEST_CRUSHED,
+    MEM_LIMIT_OR_LOWER_THAN_ZERO,
+    GET_GOJY_NAHUI
 };
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
 #define LOG_FUNC_INFO fprintf(log_file, "\n[INFO] [%s:%d] (%s) --> started...\n", file_name, line_num, __FUNCTION__);
-#define END_FUNC_LOG  fprintf(log_file, "[INFO] (%s) --> completed!\n\n", __FUNCTION__);
-#define CRUSH_FUNC_LOG  fprintf(log_file, "[INFO] (%s) --> CRUSHED!!!\n\n", __FUNCTION__);
+#define END_FUNC_LOG  fprintf(log_file, "[INFO] (%s) --> completed.\n\n", __FUNCTION__);
+#define CRUSH_FUNC_LOG  fprintf(log_file, "[WARN] (%s) --> CRUSHED!!!\n\n", __FUNCTION__);
+#define LOG(name, ...) fprintf(log_file, name, ## __VA_ARGS__);
 
-#define PRINT_VAR_WITH_NAME(x)  fprintf(log_file, "--> %s = ", #x); PRINT_ELEM_T(x); fprintf(log_file, " <--\n");
+#define PRINT_VAR_WITH_NAME(x)  LOG("--> %s = ", #x) PRINT_ELEM_T(x); LOG(" <--\n")
 #define PRINT_VAR(x)            PRINT_ELEM_T(x);
 #define PRINT_FUL_STACK(x)      PrintStack(x, #x, x->capacity);
 #define PRINT_STACK(x)          PrintStack(x, #x, x->size);
@@ -52,11 +55,6 @@ enum STACK_ERR
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
 bool IsPoison(stack_elem element);
-
-void PrintDouble (const double var);
-void PrintInt    (const    int var);
-void PrintChar   (const   char var);
-void PrintStr    (const  char *var);
 
 void PrintStack(Stack_t *stack);
 

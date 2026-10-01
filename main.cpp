@@ -1,5 +1,5 @@
 typedef double stack_elem;
-#define PRINT_ELEM_T PrintDouble
+#define PRINT_ELEM_T(x) LOG("%lg", x)
 
 #define _DEBUG
 
@@ -9,10 +9,13 @@ typedef double stack_elem;
 #include "stack.cpp"
 
 
-// TODO записывать имя стека в структуру с ним
 // TODO memory allocation
-// TODO error code
-// TODO данные о вызывающей строке и файле
+// COMP error code
+// COMP данные о вызывающей строке и файле
+// TODO define на имя функции вместо DEBUG_INFO
+
+// TODO ull to canary
+// TODO minimize size
 
 int main()
 {
@@ -20,30 +23,27 @@ int main()
 
     Stack_t stack = {};
 
-    StackCtor(&stack, DEBUG_INFO(error));
+    StackCtor(&stack, 2, DEBUG_INFO(error));
 
-    StackPush(&stack, 11.0, DEBUG_INFO(error));
-    StackPush(&stack, 12.0, DEBUG_INFO(error));
-    StackPush(&stack, 13.0, DEBUG_INFO(error));
-    StackPush(&stack, 14.0, DEBUG_INFO(error));
-    StackPush(&stack, 15.0, DEBUG_INFO(error));
-    StackPush(&stack, 16.0, DEBUG_INFO(error));
-    StackPush(&stack, 17.0, DEBUG_INFO(error));
-    StackPush(&stack, 18.0, DEBUG_INFO(error));
-    StackPush(&stack, 19.0, DEBUG_INFO(error));
-    StackPush(&stack, 21.0, DEBUG_INFO(error));
+    for (int i = 0; i < 1000; i++)
+        // StackPush(&stack, (1 + i/10) * 10 + i%10, DEBUG_INFO(error));
+        StackPush(&stack, i, DEBUG_INFO(error));
 
-    StackPop(&stack, DEBUG_INFO(error));
-    stack.capacity = -1;
-    stack.data = (double *) NULL;
-    StackPush(&stack, 22.0, DEBUG_INFO(error));
-    StackPush(&stack, 22.0, DEBUG_INFO(error));
-    StackPush(NULL, 22.0, DEBUG_INFO(error));
-    StackPush(&stack, 22.0, DEBUG_INFO(error));
+    // StackPop(&stack, DEBUG_INFO(error));
+    // stack.capacity = -1;
 
-    
-    StackPop(&stack, DEBUG_INFO(error));
 
+    // stack.data = (double *) NULL;
+
+    // stack.capacity = 0;
+    for (int i = 0; i < 1030; i++)
+    {
+        stack_elem a = StackPop(&stack, DEBUG_INFO(error));
+        // printf("%lg\n", a);
+    }
+
+    StackPush(&stack, 52, DEBUG_INFO(error));
+    StackPush(&stack, 52, DEBUG_INFO(error));
 
 
     // StackPop(&stack);
@@ -51,7 +51,8 @@ int main()
     StackDestructor(&stack, DEBUG_INFO(error));
 
     #ifdef _DEBUG
+    LOG("Error code: %d", error)
     fclose(log_file);
     #endif
-    return 0;
+    return error;
 }

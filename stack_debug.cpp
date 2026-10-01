@@ -11,52 +11,30 @@ FILE *const log_file = fopen(LOG_FILE_NAME, "w");
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
-void PrintDouble(const double var)
-{
-    fprintf(log_file, "%lg", var);
-}
-
-void PrintInt   (const int var)
-{
-    fprintf(log_file, "%d", var);
-}
-
-void PrintChar  (const char var)
-{
-    fprintf(log_file, "%c", var);
-}
-
-void PrintStr   (const char *var)
-{
-    fprintf(log_file, "%s", var);
-}
-
 
 void PrintStack(Stack_t *stack, const char *name, size_t len)
 {
-    fprintf(log_file, "\\/-----------------------------------------------------\\/\n");
-    fprintf(log_file, "%s: size = %zu, capacity = %zu;\n\n", name, stack->size, stack->capacity);
+    LOG("\\/-----------------------------------------------------\\/\n")
+    LOG("* %s[%p]: size = %zu, capacity = %zu;\n\n", name, stack->data, stack->size, stack->capacity)
+
+    if (stack->data[-1] == BORDER_LINE)
+        PRINT_VAR_WITH_NAME(stack->data[-1]);
 
     if (len == 0)
-        fprintf(log_file, "there's no data.\n");
+        LOG("\tThere's no data.\n")
     else // print elements
     {
         for (size_t i = 0; i < len; i++)
         {
-            fprintf(log_file, "stack[%zu] = ", i); 
+            LOG("\tstack[%4zu] = ", i) 
             PRINT_VAR(stack->data[i]);
-            fprintf(log_file, ";\n");
+            LOG(";\n")
         }
+        if (stack->data[(stack->capacity)] == BORDER_LINE)
+            PRINT_VAR_WITH_NAME(stack->data[stack->capacity]);
     }
 
-
-    if (stack->data[-1] == BORDER_LINE)
-        PRINT_VAR_WITH_NAME(stack->data[-1]);
-    if (stack->data[(stack->capacity)] == BORDER_LINE)
-        PRINT_VAR_WITH_NAME(stack->data[stack->capacity]);
-
-    fprintf(log_file,   "/\\-----------------------------------------------------/\\\n");
-    fprintf(log_file, "\n\n");
+    LOG("/\\-----------------------------------------------------/\\\n")
     return;
 }
 
@@ -70,7 +48,7 @@ bool IsPoison(stack_elem element)
 
 int StackVerify(Stack_t *stack)
 {
-    fprintf(log_file, "* Stack verifying...\n");
+    LOG("* Stack verifying...\n")
     ASRT_ST_P(stack); // return
     ASRT_ST_MEM(stack); // return
 
@@ -78,44 +56,48 @@ int StackVerify(Stack_t *stack)
 
     int err_code = ITS_OKAY;
 
-    if (stack->capacity < 0)
-        fprintf(log_file, "--> Stack capacity is lower then zero!\n");
+    if (stack->capacity > MEM_LIM)
+        LOG("--> Stack capacity is lower then zero or overflowed!\n")
 
-    if (stack->size < 0)
-        fprintf(log_file, "--> Stack size is lower then zero!\n");
+    if (stack->size > MEM_LIM)
+        LOG("--> Stack size is lower then zero or overflowed!\n")
 
     if (stack->size > stack->capacity)
     {
-        fprintf(log_file, "--> Stack size is greater than capacity!\n");
+        LOG("--> Stack size is greater than capacity!\n")
         err_code = SIZE_MORE_CAPACITY;
     }
 
-    if (stack->capacity > 0)
+    if ((stack->capacity > 0) && (stack->capacity < MEM_LIM) && (stack->size < MEM_LIM))
         for (size_t i = 0; i < stack->size; i++)
         {
             if (stack->data[i] == POISON)
             {
-                fprintf(log_file, "--> Stack[%zu] == POISON!\n", i);
+                LOG("--> Stack[%zu] == POISON!\n", i)
                 err_code = FIND_POISON;
             }
         }
+    else if (stack->capacity == 0 or stack->size == 0)
+        LOG("--> Stack is empty")
     else
     {
-        fprintf(log_file, "--> Stack is empty.\n");
+        LOG("capacity (size) greater MEM_LIM.\n")
     }
 
     if (stack->data[-1] != BORDER_LINE)
-        fprintf(log_file, "--> Left canary is crushed!\n");
+        LOG("--> Left canary is crushed!\n")
     else
-        fprintf(log_file, "* Left canary is okay.\n");
+        LOG("* Left canary is okay.\n")
 
-    if ((err_code == ITS_OKAY) && (stack->data[stack->capacity] != BORDER_LINE))
-        fprintf(log_file, "--> Right canary is crushed!\n");
+    if ((stack->capacity < MEM_LIM) && (stack->data[stack->capacity] == BORDER_LINE))
+        LOG("--> Right canary is okay.\n")
+    else if (stack->capacity < MEM_LIM)
+        LOG("--> Right canary is undefined!\n")
     else
-        fprintf(log_file, "* Right canary is okay.\n");
+        LOG("* Right canary is crushed.\n")
 
 
-    fprintf(log_file, "* Stack verifying completed.\n");
+    LOG("* Stack verifying completed.\n")
     return err_code;
 }
 

@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
@@ -49,25 +50,27 @@ typedef double stack_elem;
 
 struct Stack_t
 {
+
     stack_elem *data;
-    ssize_t      size;
-    ssize_t      capacity;
+    size_t      size;
+    size_t      capacity;
 
-    #ifdef STACK_DEBUG
-
+    #ifdef _DEBUG
+    // TODO canary
     #endif
 };
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
-const size_t STACK_ST_SIZE = 10;
-const size_t MAX_STR_LEN   = 50;
+const size_t MAX_STR_LEN     = 50;
+const size_t CAPACITY_FACTOR = 2;
+const size_t MEM_LIM         = 524288001; // 500 MB
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
-int StackCtor(Stack_t *stack, DEBUG_FUNC_INFO);
+int StackCtor(Stack_t *stack, size_t capacity, DEBUG_FUNC_INFO);
 
 int DomainExpansion(Stack_t *stack, DEBUG_FUNC_INFO);
 
