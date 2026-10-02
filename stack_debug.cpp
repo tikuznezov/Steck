@@ -17,11 +17,15 @@ void PrintStack(Stack_t *stack, const char *name, size_t len)
     LOG("\\/-----------------------------------------------------\\/\n")
     LOG("* %s[%p]: size = %zu, capacity = %zu;\n\n", name, stack->data, stack->size, stack->capacity)
 
-    if (stack->data[-1] == BORDER_LINE)
-        PRINT_VAR_WITH_NAME(stack->data[-1]);
+    if (*(stack->c1) == BORDER_LINE)
+    {
+        LOG("Left canary = %ld;\n", *(stack->c1));
+    }
 
     if (len == 0)
+    {
         LOG("\tThere's no data.\n")
+    }
     else // print elements
     {
         for (size_t i = 0; i < len; i++)
@@ -30,8 +34,14 @@ void PrintStack(Stack_t *stack, const char *name, size_t len)
             PRINT_VAR(stack->data[i]);
             LOG(";\n")
         }
-        if (stack->data[(stack->capacity)] == BORDER_LINE)
-            PRINT_VAR_WITH_NAME(stack->data[stack->capacity]);
+        if (*(stack->c2) == BORDER_LINE)
+        {
+            LOG("Right canary = %ld;\n", *(stack->c2));
+        }
+        else
+        {
+            LOG("--> Right canary broke!\n")
+        }
     }
 
     LOG("/\\-----------------------------------------------------/\\\n")
@@ -84,22 +94,85 @@ int StackVerify(Stack_t *stack)
         LOG("capacity (size) greater MEM_LIM.\n")
     }
 
-    if (stack->data[-1] != BORDER_LINE)
+    if (*(stack->c1) != BORDER_LINE)
         LOG("--> Left canary is crushed!\n")
     else
         LOG("* Left canary is okay.\n")
 
-    if ((stack->capacity < MEM_LIM) && (stack->data[stack->capacity] == BORDER_LINE))
-        LOG("--> Right canary is okay.\n")
+    if ((stack->capacity < MEM_LIM) && (*(stack->c2) == BORDER_LINE))
+        LOG("* Right canary is okay.\n")
     else if (stack->capacity < MEM_LIM)
         LOG("--> Right canary is undefined!\n")
     else
-        LOG("* Right canary is crushed.\n")
+        LOG("--> Right canary is crushed.\n")
 
 
     LOG("* Stack verifying completed.\n")
     return err_code;
 }
+
+size_t CalcMemToCanary(size_t canary_sz, size_t arr_el_sz, size_t el_cont)
+{
+    size_t blocks_count = ((arr_el_sz * el_cont + canary_sz - 1) / canary_sz) + 2;
+
+    return blocks_count * canary_sz;
+}
+
+void PrintError(int error)
+{
+    switch (error)
+    {
+        case ITS_OKAY:
+            LOG("* Error: no errors.\n")
+            break;
+
+        case MEM_LIMIT_OR_LOWER_THAN_ZERO:
+            LOG("--> Error: requested memory is greater than MEM_LIM or lower than zero!\n")
+            break;
+
+        case STACK_CALLOC_ERROR:
+            LOG("--> Error: calloc returned NULL, stack was not created!\n")
+            break;
+
+        case NO_MEMORY_TO_STACK:
+            LOG("--> Error: realloc returned NULL, no memory to expand stack!\n")
+            break;
+
+        case SIZE_MORE_CAPACITY:
+            LOG("--> Error: stack size is greater than capacity!\n")
+            break;
+
+        case FIND_POISON:
+            LOG("--> Error: POISON found among stack elements!\n")
+            break;
+
+        case CTOR_CRUSHED:
+            LOG("--> Error: stack verification failed in StackCtor!\n")
+            break;
+
+        case PUSH_CRUSHED:
+            LOG("--> Error: stack verification failed in StackPush!\n")
+            break;
+
+        case POP_CRUSHED:
+            LOG("--> Error: stack verification failed in StackPop!\n")
+            break;
+
+        case DEST_CRUSHED:
+            LOG("--> Error: stack is NULL or verification failed in StackDestructor!\n")
+            break;
+
+        case GET_GOJY_NAHUI:
+            LOG("--> Error: attempt to pop from an empty stack (canary reached)!\n")
+            break;
+
+        default:
+            LOG("--> Error: unknown error code %d!\n", error)
+            break;
+    }
+    return;
+}
+
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 

@@ -8,9 +8,9 @@
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
-const char *LOG_FILE_NAME = "STACK_LOG.log";
-const stack_elem POISON = ('s'+'a'+'t'+'o'+'r'+'u') * ('p'+'i'+'d'+'o'+'r'+'a'+'s');
-const stack_elem BORDER_LINE = ('c'+'a'+'n'+'a'+'r'+'y') * ('b'+'o'+'r'+'d'+'e'+'r'+'l'+'i'+'n'+'e');
+const char *     LOG_FILE_NAME = "STACK_LOG.log";
+const stack_elem POISON        = ('s'+'a'+'t'+'o'+'r'+'u') * ('p'+'i'+'d'+'o'+'r'+'a'+'s');
+const stack_elem BORDER_LINE   = ('c'+'a'+'n'+'a'+'r'+'y') * ('b'+'o'+'r'+'d'+'e'+'r'+'l'+'i'+'n'+'e');
 
 enum STACK_ERR
 {
@@ -34,10 +34,10 @@ enum STACK_ERR
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
-#define LOG_FUNC_INFO fprintf(log_file, "\n[INFO] [%s:%d] (%s) --> started...\n", file_name, line_num, __FUNCTION__);
-#define END_FUNC_LOG  fprintf(log_file, "[INFO] (%s) --> completed.\n\n", __FUNCTION__);
-#define CRUSH_FUNC_LOG  fprintf(log_file, "[WARN] (%s) --> CRUSHED!!!\n\n", __FUNCTION__);
-#define LOG(name, ...) fprintf(log_file, name, ## __VA_ARGS__);
+#define LOG(name, ...)  fprintf(log_file, name, ## __VA_ARGS__);
+#define LOG_FUNC_INFO   LOG("\n[INFO] [%s:%d] (%s) --> started...\n", file_name, line_num, __FUNCTION__)
+#define END_FUNC_LOG    LOG("[INFO] (%s) --> completed.\n\n", __FUNCTION__)
+#define CRUSH_FUNC_LOG  LOG("[WARN] (%s) --> CRUSHED!!!\n\n", __FUNCTION__)
 
 #define PRINT_VAR_WITH_NAME(x)  LOG("--> %s = ", #x) PRINT_ELEM_T(x); LOG(" <--\n")
 #define PRINT_VAR(x)            PRINT_ELEM_T(x);
@@ -59,6 +59,10 @@ bool IsPoison(stack_elem element);
 void PrintStack(Stack_t *stack);
 
 int StackVerify(Stack_t *stack);
+
+size_t CalcMemToCanary(size_t canary_sz, size_t arr_el_sz, size_t el_cont);
+
+void PrintError(int error);
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 

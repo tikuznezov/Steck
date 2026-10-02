@@ -50,33 +50,42 @@ typedef double stack_elem;
 
 struct Stack_t
 {
+    // TODO canary
+    #ifdef _DEBUG
+    unsigned long long struct_c1;
+    #endif
 
     stack_elem *data;
     size_t      size;
     size_t      capacity;
-
     #ifdef _DEBUG
-    // TODO canary
+    unsigned long long *c1;
+    unsigned long long *c2;
+
+    unsigned long long struct_c2;
     #endif
+    // TODO canary
 };
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
-const size_t MAX_STR_LEN     = 50;
-const size_t CAPACITY_FACTOR = 2;
-const size_t MEM_LIM         = 524288001; // 500 MB
+const size_t MAX_STR_LEN          = 50;
+const double CAPACITY_FACTOR_UP   = 2;
+const double CAPACITY_FACTOR_DOWN = 0.66666;
+const size_t MIN_CAP              = 8;
+const size_t MEM_LIM              = 52428800; // 50 MB
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
-int StackCtor(Stack_t *stack, size_t capacity, DEBUG_FUNC_INFO);
+int StackCtor       (Stack_t *stack, size_t capacity,        DEBUG_FUNC_INFO);
 
-int DomainExpansion(Stack_t *stack, DEBUG_FUNC_INFO);
+int DomainExpansion (Stack_t *stack, double capacity_factor, DEBUG_FUNC_INFO);
 
-int StackPush(Stack_t *stack, stack_elem pushed_el, DEBUG_FUNC_INFO);
+int StackPush       (Stack_t *stack, stack_elem pushed_el,   DEBUG_FUNC_INFO);
 
-stack_elem StackPop(Stack_t *stack, DEBUG_FUNC_INFO);
+stack_elem StackPop (Stack_t *stack,                         DEBUG_FUNC_INFO);
 
 
 //-------------------------------------------------------------------------

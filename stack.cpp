@@ -1,7 +1,7 @@
 #include "stack.h"
 #include "debug.h"
 
-
+// #define _DEBUG
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
 int StackCtor(Stack_t *stack, size_t capacity, DEBUG_FUNC_INFO)
@@ -16,12 +16,12 @@ int StackCtor(Stack_t *stack, size_t capacity, DEBUG_FUNC_INFO)
             *error = MEM_LIMIT_OR_LOWER_THAN_ZERO;
             return MEM_LIMIT_OR_LOWER_THAN_ZERO;
         }
-        #define MEM_TO_BORDERS + 2
+        size_t mem = CalcMemToCanary(sizeof(stack->c1), sizeof(stack_elem), capacity);
+        LOG("Size of memory to stack with canary = %zu\n", mem)
     #else 
-        #define MEM_TO_BORDERS
+        size_t mem = sizeof(stack_elem) * capacity;
     #endif
-
-    stack->data = (stack_elem *) calloc(capacity MEM_TO_BORDERS, sizeof(stack_elem));
+    stack->data = (stack_elem *) calloc(1, mem);
 
     // set started values
     stack->capacity = capacity;
@@ -42,9 +42,21 @@ int StackCtor(Stack_t *stack, size_t capacity, DEBUG_FUNC_INFO)
             // FIXME
         }
 
-        stack->data++;
-        stack->data[-1] = BORDER_LINE;
-        stack->data[(stack->capacity)] = BORDER_LINE;
+        LOG("\t- mem = %zu, sizeof(c2) = %zu;\n", mem, sizeof(stack->c2))
+
+        LOG("\t- stack->c1 = %zu;\n", stack->data);
+        stack->c1   = (unsigned long long *) stack->data;
+
+        LOG("\t- stack->c2 = %zu;\n", ((char *)stack->data) + mem - sizeof(stack->c2))
+        stack->c2   = (unsigned long long *)(((char *)stack->data) + mem - sizeof(stack->c2));
+
+        LOG("\t- stack->data = %zu;\n", (char *)stack->data + sizeof(stack->c1))
+        stack->data = (stack_elem *)((char *)stack->data + sizeof(stack->c1));
+
+        LOG("* c1, c2, data get their addresses.\n\n")
+
+        *(stack->c1) = BORDER_LINE;
+        *(stack->c2) = BORDER_LINE;
 
         for (size_t i = 0; i < stack->capacity; i++)
         {
@@ -98,7 +110,7 @@ int StackPush(Stack_t *stack, stack_elem pushed_el, DEBUG_FUNC_INFO)
         LOG("* PUSH called DomainExpansion.\n")
         PRINT_FUL_STACK(stack);
         #endif
-        DomainExpansion(stack, DEBUG_INFO(*error));
+        DomainExpansion(stack, CAPACITY_FACTOR_UP, DEBUG_INFO(*error));
     }
 
     // push element
@@ -124,7 +136,7 @@ stack_elem StackPop(Stack_t *stack, DEBUG_FUNC_INFO)
         PRINT_VAR(stack->data[stack->size-1]); 
         LOG(";\n")
 
-        if (stack->data[ stack->size] == BORDER_LINE)
+        if ((stack->data[stack->size - 1] == BORDER_LINE) || stack->size < 1)
         {
             LOG("--> POP canary!\n")
             *error = GET_GOJY_NAHUI;
@@ -134,13 +146,24 @@ stack_elem StackPop(Stack_t *stack, DEBUG_FUNC_INFO)
         else 
             END_FUNC_LOG
             stack_elem pop_el= stack->data[--stack->size];
-            stack->data[stack->size + 1] = POISON;
+            stack->data[stack->size] = POISON;
     #else
         assert(stack);
         assert(stack->data);
 
         stack_elem pop_el = stack->data[--stack->size];
     #endif
+
+    if ((stack->size < ((size_t) stack->capacity / CAPACITY_FACTOR_UP)) && (stack->size > MIN_CAP))
+    {
+        #ifdef _DEBUG
+        LOG("* Stack size = %zu. Stack reduction...\n", stack->size)
+        LOG("* POP called DomainExpansion.\n")
+        PRINT_FUL_STACK(stack);
+        #endif
+        DomainExpansion(stack, CAPACITY_FACTOR_DOWN, DEBUG_INFO(*error));
+    }
+
 
 
     // считать среднеквадратичное отклонение. размер стека от 2х до 3х сигма
@@ -162,7 +185,7 @@ int StackDestructor(Stack_t *stack, DEBUG_FUNC_INFO)
 
         for (size_t i = 0; i < stack->capacity; i++)
             stack->data[i] = POISON;
-        stack->data--;
+        stack->data = (stack_elem *)stack->c1;
     #else
         assert(stack);
         assert(stack->data);
@@ -176,8 +199,8 @@ int StackDestructor(Stack_t *stack, DEBUG_FUNC_INFO)
     return 0;
 }
 
-// TODO
-int DomainExpansion(Stack_t *stack, DEBUG_FUNC_INFO)
+// COMP
+int DomainExpansion(Stack_t *stack, double capacity_factor, DEBUG_FUNC_INFO)
 {
     #ifdef _DEBUG
         LOG_FUNC_INFO
@@ -199,14 +222,30 @@ int DomainExpansion(Stack_t *stack, DEBUG_FUNC_INFO)
         assert(stack->data);
     #endif
 
-    size_t new_capacity = (size_t)(stack->capacity * CAPACITY_FACTOR);
+    size_t new_capacity = (size_t)(stack->capacity * capacity_factor);
 
     #ifdef _DEBUG
         LOG("* Attempt to expand memory...\n")
-        LOG("* Requested memory size = %zu", new_capacity)
-        stack_elem *new_pointer = (stack_elem *) realloc((void *)(stack->data - 1), (new_capacity + 2) * sizeof(stack_elem));
+        LOG("* Requested memory size = %zu\n", new_capacity)
+
+        size_t mem = CalcMemToCanary(sizeof(stack->c1), sizeof(stack_elem), new_capacity);
+        LOG("Size of memory to stack with canary = %zu\n", mem)
+
+        stack_elem *new_pointer = (stack_elem *) realloc((void *)(stack->c1), mem);
         if (new_pointer != NULL)
-            new_pointer++;
+        {
+            LOG("mem = %zu, sizeof(c2) = %zu;\n", mem, sizeof(stack->c2))
+
+            LOG("stack->c1 = %zu;\n", new_pointer);
+            stack->c1   = (unsigned long long *) new_pointer;
+
+            LOG("stack->c2 = %zu;\n", ((char *)new_pointer) + mem - sizeof(stack->c2))
+            stack->c2   = (unsigned long long *)(((char *)new_pointer) + mem - sizeof(stack->c2));
+            *(stack->c2) = BORDER_LINE;
+
+            LOG("stack->data = %zu;\n", (char *)new_pointer + sizeof(stack->c1))
+            stack->data = (stack_elem *)((char *)new_pointer + sizeof(stack->c1));
+        }
     #else
         stack_elem *new_pointer = (stack_elem *) realloc((void *)(stack->data    ), new_capacity * sizeof(stack_elem));
     #endif
@@ -214,18 +253,19 @@ int DomainExpansion(Stack_t *stack, DEBUG_FUNC_INFO)
     if (new_pointer != NULL)
     {
         stack->capacity = new_capacity;
+        #ifndef _DEBUG
         stack->data     = new_pointer;
+        #endif
+
         #ifdef _DEBUG
-        
-        for (size_t i = stack->size; i < stack->capacity; i++)
-            stack->data[i] = POISON;
-        stack->data[stack->capacity] = BORDER_LINE;
-        LOG("* Memory successfully expanded.\n")
-        LOG("* New values:\n")
-        LOG("\t- Data address = %p;\n", stack->data)
-        LOG("\t- Capacity     = %zu;\n", stack->capacity)
-        PRINT_FUL_STACK(stack);
-        END_FUNC_LOG
+            for (size_t i = stack->size; i < stack->capacity; i++)
+                stack->data[i] = POISON;
+            LOG("* Memory successfully expanded.\n")
+            LOG("* New values:\n")
+            LOG("\t- Data address = %p;\n", stack->data)
+            LOG("\t- Capacity     = %zu;\n", stack->capacity)
+            PRINT_FUL_STACK(stack);
+            END_FUNC_LOG
         #endif
     }
     else
