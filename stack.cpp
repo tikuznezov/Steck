@@ -6,17 +6,19 @@
 
 int StackCtor(Stack_t *stack, size_t capacity, DEBUG_FUNC_INFO)
 {
-    // TODO check uninit stack
+    // COMP check uninit stack
 
     // get memory
     #ifdef _DEBUG
+        LOG("\n------------------------------------------------------------------------------------------------------------\n\n")
         LOG_FUNC_INFO
-        if (capacity > MEM_LIM)
+        size_t mem = CalcMemToCanary(sizeof(stack->c1), sizeof(stack_elem), capacity);
+        if (mem >= MEM_LIM)
         {
             *error = MEM_LIMIT_OR_LOWER_THAN_ZERO;
+            LOG("--> Memory limit exceed!\n")
             return MEM_LIMIT_OR_LOWER_THAN_ZERO;
         }
-        size_t mem = CalcMemToCanary(sizeof(stack->c1), sizeof(stack_elem), capacity);
         LOG("Size of memory to stack with canary = %zu\n", mem)
     #else 
         size_t mem = sizeof(stack_elem) * capacity;
@@ -44,19 +46,21 @@ int StackCtor(Stack_t *stack, size_t capacity, DEBUG_FUNC_INFO)
 
         LOG("\t- mem = %zu, sizeof(c2) = %zu;\n", mem, sizeof(stack->c2))
 
-        LOG("\t- stack->c1 = %zu;\n", stack->data);
+        LOG("\t- stack->c1 = %p;\n", stack->data);
         stack->c1   = (unsigned long long *) stack->data;
 
-        LOG("\t- stack->c2 = %zu;\n", ((char *)stack->data) + mem - sizeof(stack->c2))
+        LOG("\t- stack->c2 = %p;\n", ((char *)stack->data) + mem - sizeof(stack->c2))
         stack->c2   = (unsigned long long *)(((char *)stack->data) + mem - sizeof(stack->c2));
 
-        LOG("\t- stack->data = %zu;\n", (char *)stack->data + sizeof(stack->c1))
+        LOG("\t- stack->data = %p;\n", (char *)stack->data + sizeof(stack->c1))
         stack->data = (stack_elem *)((char *)stack->data + sizeof(stack->c1));
 
         LOG("* c1, c2, data get their addresses.\n\n")
 
         *(stack->c1) = BORDER_LINE;
         *(stack->c2) = BORDER_LINE;
+        stack->struct_c1 = BORDER_LINE;
+        stack->struct_c2 = BORDER_LINE;
 
         for (size_t i = 0; i < stack->capacity; i++)
         {
@@ -78,7 +82,7 @@ int StackCtor(Stack_t *stack, size_t capacity, DEBUG_FUNC_INFO)
 
 int StackPush(Stack_t *stack, stack_elem pushed_el, DEBUG_FUNC_INFO)
 {
-    // TODO check stack
+    // COMP check stack
 
     #ifdef _DEBUG
         LOG_FUNC_INFO
@@ -114,8 +118,11 @@ int StackPush(Stack_t *stack, stack_elem pushed_el, DEBUG_FUNC_INFO)
     }
 
     // push element
-    stack->data[stack->size] = pushed_el;
-    stack->size++;
+    if (stack->size < stack->capacity)
+    {
+        stack->data[stack->size] = pushed_el;
+        stack->size++;
+    }
     #ifdef _DEBUG
     END_FUNC_LOG
     #endif
@@ -139,7 +146,7 @@ stack_elem StackPop(Stack_t *stack, DEBUG_FUNC_INFO)
         if ((stack->data[stack->size - 1] == BORDER_LINE) || stack->size < 1)
         {
             LOG("--> POP canary!\n")
-            *error = GET_GOJY_NAHUI;
+            *error = GET_GOJY;
             CRUSH_FUNC_LOG
             return POISON;
         }
@@ -192,6 +199,8 @@ int StackDestructor(Stack_t *stack, DEBUG_FUNC_INFO)
     #endif
 
     free(stack->data);
+    stack->data = NULL;
+    stack = NULL;
 
     #ifdef _DEBUG
     END_FUNC_LOG
@@ -236,14 +245,14 @@ int DomainExpansion(Stack_t *stack, double capacity_factor, DEBUG_FUNC_INFO)
         {
             LOG("mem = %zu, sizeof(c2) = %zu;\n", mem, sizeof(stack->c2))
 
-            LOG("stack->c1 = %zu;\n", new_pointer);
+            LOG("stack->c1 = %p;\n", new_pointer);
             stack->c1   = (unsigned long long *) new_pointer;
 
-            LOG("stack->c2 = %zu;\n", ((char *)new_pointer) + mem - sizeof(stack->c2))
+            LOG("stack->c2 = %p;\n", ((char *)new_pointer) + mem - sizeof(stack->c2))
             stack->c2   = (unsigned long long *)(((char *)new_pointer) + mem - sizeof(stack->c2));
             *(stack->c2) = BORDER_LINE;
 
-            LOG("stack->data = %zu;\n", (char *)new_pointer + sizeof(stack->c1))
+            LOG("stack->data = %p;\n", (char *)new_pointer + sizeof(stack->c1))
             stack->data = (stack_elem *)((char *)new_pointer + sizeof(stack->c1));
         }
     #else

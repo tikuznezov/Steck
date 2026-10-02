@@ -8,9 +8,11 @@
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
-const char *     LOG_FILE_NAME = "STACK_LOG.log";
-const stack_elem POISON        = ('s'+'a'+'t'+'o'+'r'+'u') * ('p'+'i'+'d'+'o'+'r'+'a'+'s');
-const stack_elem BORDER_LINE   = ('c'+'a'+'n'+'a'+'r'+'y') * ('b'+'o'+'r'+'d'+'e'+'r'+'l'+'i'+'n'+'e');
+const char *     LOG_FILE_NAME       = "STACK_LOG.log";
+const stack_elem POISON              = ('s'+'a'+'t'+'o'+'r'+'u') * ('p'+'i'+'d'+'o'+'r'+'a'+'s');
+const unsigned long long BORDER_LINE = 0xD0DACDDDD; // FIXME
+
+// const unsigned long long BORDER_LINE   = ('c'+'a'+'n'+'a'+'r'+'y') * ('b'+'o'+'r'+'d'+'e'+'r'+'l'+'i'+'n'+'e');
 
 enum STACK_ERR
 {
@@ -28,7 +30,7 @@ enum STACK_ERR
     CTOR_CRUSHED,
     DEST_CRUSHED,
     MEM_LIMIT_OR_LOWER_THAN_ZERO,
-    GET_GOJY_NAHUI
+    GET_GOJY
 };
 
 
@@ -54,9 +56,9 @@ enum STACK_ERR
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
-bool IsPoison(stack_elem element);
+// bool IsPoison(stack_elem element);
 
-void PrintStack(Stack_t *stack);
+int PrintStack(Stack_t *stack);
 
 int StackVerify(Stack_t *stack);
 

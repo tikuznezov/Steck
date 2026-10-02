@@ -12,14 +12,17 @@ FILE *const log_file = fopen(LOG_FILE_NAME, "w");
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-void PrintStack(Stack_t *stack, const char *name, size_t len)
+int PrintStack(Stack_t *stack, const char *name, size_t len)
 {
+    ASRT_ST_P(stack); // return
+    ASRT_ST_MEM(stack); // return
+
     LOG("\\/-----------------------------------------------------\\/\n")
     LOG("* %s[%p]: size = %zu, capacity = %zu;\n\n", name, stack->data, stack->size, stack->capacity)
 
     if (*(stack->c1) == BORDER_LINE)
     {
-        LOG("Left canary = %ld;\n", *(stack->c1));
+        LOG("Left canary = %X;\n", *(stack->c1));
     }
 
     if (len == 0)
@@ -36,7 +39,7 @@ void PrintStack(Stack_t *stack, const char *name, size_t len)
         }
         if (*(stack->c2) == BORDER_LINE)
         {
-            LOG("Right canary = %ld;\n", *(stack->c2));
+            LOG("Right canary = %X;\n", *(stack->c2));
         }
         else
         {
@@ -45,16 +48,16 @@ void PrintStack(Stack_t *stack, const char *name, size_t len)
     }
 
     LOG("/\\-----------------------------------------------------/\\\n")
-    return;
+    return 0;
 }
 
-bool IsPoison(stack_elem element)
-{
-    if (element == POISON)
-        return FIND_POISON;
-    else
-        return 0;
-}
+// bool IsPoison(stack_elem element)
+// {
+//     if (element == POISON)
+//         return FIND_POISON;
+//     else
+//         return 0;
+// }
 
 int StackVerify(Stack_t *stack)
 {
@@ -67,10 +70,10 @@ int StackVerify(Stack_t *stack)
     int err_code = ITS_OKAY;
 
     if (stack->capacity > MEM_LIM)
-        LOG("--> Stack capacity is lower then zero or overflowed!\n")
+        {LOG("--> Stack capacity is lower then zero or overflowed!\n")}
 
     if (stack->size > MEM_LIM)
-        LOG("--> Stack size is lower then zero or overflowed!\n")
+        {LOG("--> Stack size is lower then zero or overflowed!\n")}
 
     if (stack->size > stack->capacity)
     {
@@ -88,24 +91,38 @@ int StackVerify(Stack_t *stack)
             }
         }
     else if (stack->capacity == 0 or stack->size == 0)
-        LOG("--> Stack is empty")
+        {LOG("--> Stack is empty")}
     else
+        {LOG("capacity (size) greater MEM_LIM.\n")}
+
+    if (stack->c1 != NULL)
     {
-        LOG("capacity (size) greater MEM_LIM.\n")
+    if (*(stack->c1) != BORDER_LINE)
+        {LOG("--> Left canary is crushed!\n")}
+    else
+        {LOG("* Left canary is okay.\n")}
     }
 
-    if (*(stack->c1) != BORDER_LINE)
-        LOG("--> Left canary is crushed!\n")
-    else
-        LOG("* Left canary is okay.\n")
-
+    if (stack->c2 != NULL)
+    {
     if ((stack->capacity < MEM_LIM) && (*(stack->c2) == BORDER_LINE))
-        LOG("* Right canary is okay.\n")
+        {LOG("* Right canary is okay.\n")}
     else if (stack->capacity < MEM_LIM)
-        LOG("--> Right canary is undefined!\n")
+        {LOG("--> Right canary is undefined!\n")}
     else
-        LOG("--> Right canary is crushed.\n")
+        {LOG("--> Right canary is crushed.\n")}
+    }
 
+
+    if (stack->struct_c1 != BORDER_LINE)
+        {LOG("--> Left STRUCT canary is crushed!\n")}
+    else
+        {LOG("* Left STRUCT canary is okay.\n")}
+
+    if (stack->struct_c2 != BORDER_LINE)
+        {LOG("--> Right STRUCT canary is crushed!\n")}
+    else
+        {LOG("* Right STRUCT canary is okay.\n")}
 
     LOG("* Stack verifying completed.\n")
     return err_code;
@@ -162,7 +179,7 @@ void PrintError(int error)
             LOG("--> Error: stack is NULL or verification failed in StackDestructor!\n")
             break;
 
-        case GET_GOJY_NAHUI:
+        case GET_GOJY:
             LOG("--> Error: attempt to pop from an empty stack (canary reached)!\n")
             break;
 
